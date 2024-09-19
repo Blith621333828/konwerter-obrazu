@@ -3,74 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konwerter Obrazu</title>
+    <title>Konwerter Obrazu na Kolory HTML</title>
     <style>
         body {
-            background-color: #121212;
-            color: #E0E0E0;
-            font-family: Arial, sans-serif;
+            background-color: #181818;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
         }
 
         h1 {
-            color: #FF9800;
+            color: #ffa726;
+            font-size: 2.5em;
+            margin-bottom: 20px;
         }
 
         input[type="file"], button {
-            padding: 10px;
+            padding: 10px 20px;
             margin: 10px;
             border: none;
-            background-color: #FF9800;
+            background-color: #ffa726;
             color: white;
             border-radius: 5px;
             cursor: pointer;
-        }
-
-        input[type="file"] {
-            color: white;
+            font-size: 1.1em;
         }
 
         button:hover {
-            background-color: #E65100;
+            background-color: #fb8c00;
+        }
+
+        input[type="file"] {
+            background-color: #424242;
+            color: #ffffff;
+            border: 1px solid #757575;
+            cursor: pointer;
         }
 
         canvas {
-            display: none;
             margin-top: 20px;
+            display: none;
         }
 
-        textarea {
-            width: 300px;
-            height: 150px;
-            background-color: #333;
-            color: #FFF;
-            padding: 10px;
-            margin-top: 20px;
-            border-radius: 5px;
+        a {
+            color: #ffa726;
+            text-decoration: none;
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        #downloadLink {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <h1>Konwerter Obrazu na Kolory HTML</h1>
+    <h1>Konwerter Obrazu na Plik Tekstowy</h1>
 
     <!-- Przesyłanie obrazu -->
     <input type="file" id="imageInput" accept="image/*">
     <button id="convertButton">Konwertuj na plik tekstowy</button>
 
     <!-- Pobieranie pliku z kolorami -->
-    <a id="downloadLink" style="display: none;">Pobierz plik .txt</a>
+    <a id="downloadLink">Pobierz plik blithproject1.txt</a>
 
     <!-- Konwersja pliku .txt na obraz -->
     <input type="file" id="txtInput" accept=".txt">
     <button id="generateImageButton">Generuj obraz z pliku .txt</button>
-
-    <!-- Pole do wyświetlania pliku .txt -->
-    <textarea id="colorData" readonly></textarea>
 
     <!-- Canvas do wyświetlania obrazu -->
     <canvas id="canvas"></canvas>
@@ -81,7 +90,6 @@
         const downloadLink = document.getElementById('downloadLink');
         const txtInput = document.getElementById('txtInput');
         const generateImageButton = document.getElementById('generateImageButton');
-        const colorData = document.getElementById('colorData');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
@@ -101,20 +109,25 @@
                     const pixels = imageData.data;
                     let hexColors = '';
 
-                    for (let i = 0; i < pixels.length; i += 4) {
-                        const r = pixels[i].toString(16).padStart(2, '0');
-                        const g = pixels[i+1].toString(16).padStart(2, '0');
-                        const b = pixels[i+2].toString(16).padStart(2, '0');
-                        hexColors += `#${r}${g}${b}\n`;
+                    // Przechodzenie po każdym wierszu pikseli
+                    for (let y = 0; y < img.height; y++) {
+                        let rowColors = '';
+                        for (let x = 0; x < img.width; x++) {
+                            const i = (y * img.width + x) * 4;
+                            const r = pixels[i].toString(16).padStart(2, '0');
+                            const g = pixels[i+1].toString(16).padStart(2, '0');
+                            const b = pixels[i+2].toString(16).padStart(2, '0');
+                            rowColors += `#${r}${g}${b} `;
+                        }
+                        hexColors += rowColors.trim() + '\n'; // Dodajemy nową linię po każdym wierszu
                     }
 
                     const blob = new Blob([hexColors], { type: 'text/plain' });
                     const url = URL.createObjectURL(blob);
                     downloadLink.href = url;
-                    downloadLink.download = 'kolory.txt';
+                    downloadLink.download = 'blithproject1.txt';
                     downloadLink.style.display = 'block';
-                    downloadLink.textContent = 'Pobierz plik .txt';
-                    colorData.value = hexColors;
+                    downloadLink.textContent = 'Pobierz plik blithproject1.txt';
                 };
                 img.src = event.target.result;
             };
@@ -129,22 +142,27 @@
             
             reader.onload = function(event) {
                 const hexColors = event.target.result.trim().split('\n');
-                const size = Math.sqrt(hexColors.length);
+                const height = hexColors.length;
+                const width = hexColors[0].split(' ').length;
                 
-                canvas.width = size;
-                canvas.height = size;
-                const imageData = ctx.createImageData(size, size);
+                canvas.width = width;
+                canvas.height = height;
+                const imageData = ctx.createImageData(width, height);
                 
-                for (let i = 0; i < hexColors.length; i++) {
-                    const hex = hexColors[i];
-                    const r = parseInt(hex.slice(1, 3), 16);
-                    const g = parseInt(hex.slice(3, 5), 16);
-                    const b = parseInt(hex.slice(5, 7), 16);
-                    const idx = i * 4;
-                    imageData.data[idx] = r;
-                    imageData.data[idx + 1] = g;
-                    imageData.data[idx + 2] = b;
-                    imageData.data[idx + 3] = 255; // Alfa (pełna przezroczystość)
+                // Odczytujemy kolory pikseli z pliku tekstowego
+                for (let y = 0; y < height; y++) {
+                    const row = hexColors[y].split(' ');
+                    for (let x = 0; x < width; x++) {
+                        const hex = row[x];
+                        const r = parseInt(hex.slice(1, 3), 16);
+                        const g = parseInt(hex.slice(3, 5), 16);
+                        const b = parseInt(hex.slice(5, 7), 16);
+                        const idx = (y * width + x) * 4;
+                        imageData.data[idx] = r;
+                        imageData.data[idx + 1] = g;
+                        imageData.data[idx + 2] = b;
+                        imageData.data[idx + 3] = 255; // Alfa (pełna nieprzezroczystość)
+                    }
                 }
 
                 ctx.putImageData(imageData, 0, 0);
