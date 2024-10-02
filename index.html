@@ -6,83 +6,136 @@
     <title>Konwerter Obrazu na Kolory HTML</title>
     <style>
         body {
-            background-color: #181818;
-            color: #ffffff;
-            font-family: 'Arial', sans-serif;
+            background-color: #1f1f1f;
+            color: #e0e0e0;
+            font-family: 'Poppins', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 0 20px;
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
 
         h1 {
             color: #ffa726;
-            font-size: 2.5em;
+            font-size: 3em;
             margin-bottom: 20px;
+            letter-spacing: 1.5px;
+            text-align: center;
         }
 
-        input[type="file"], button {
-            padding: 10px 20px;
-            margin: 10px;
+        .input-section, .output-section {
+            background-color: #292929;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .input-section:hover, .output-section:hover {
+            transform: translateY(-10px);
+        }
+
+        .input-section input[type="file"],
+        .input-section button,
+        .output-section button {
+            padding: 12px 25px;
+            margin: 10px 0;
             border: none;
             background-color: #ffa726;
             color: white;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 1.1em;
+            font-size: 1.2em;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            text-align: center;
         }
 
-        button:hover {
+        .input-section button:hover,
+        .output-section button:hover {
             background-color: #fb8c00;
         }
 
-        input[type="file"] {
+        .input-section input[type="file"] {
             background-color: #424242;
             color: #ffffff;
             border: 1px solid #757575;
             cursor: pointer;
         }
 
-        canvas {
-            margin-top: 20px;
+        #canvas {
             display: none;
+            margin-top: 20px;
+            border: 1px solid #ffa726;
+            border-radius: 10px;
         }
 
-        a {
+        #downloadLink {
             color: #ffa726;
             text-decoration: none;
             font-size: 1.2em;
             margin-top: 10px;
+            display: block;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #downloadLink.visible {
+            opacity: 1;
         }
 
         a:hover {
             text-decoration: underline;
         }
 
-        #downloadLink {
-            display: none;
+        footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #757575;
+            text-align: center;
+        }
+
+        footer a {
+            color: #ffa726;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <h1>Konwerter Obrazu na Plik Tekstowy</h1>
 
-    <!-- Przesyłanie obrazu -->
-    <input type="file" id="imageInput" accept="image/*">
-    <button id="convertButton">Konwertuj na plik tekstowy</button>
+    <!-- Sekcja przesyłania obrazu -->
+    <div class="input-section">
+        <input type="file" id="imageInput" accept="image/*">
+        <button id="convertButton">Konwertuj na plik tekstowy</button>
+    </div>
 
-    <!-- Pobieranie pliku z kolorami -->
-    <a id="downloadLink">Pobierz plik blithproject1.txt</a>
-
-    <!-- Konwersja pliku .txt na obraz -->
-    <input type="file" id="txtInput" accept=".txt">
-    <button id="generateImageButton">Generuj obraz z pliku .txt</button>
+    <!-- Sekcja pobierania i konwersji -->
+    <div class="output-section">
+        <a id="downloadLink">Pobierz plik blithproject1.txt</a>
+        <input type="file" id="txtInput" accept=".txt">
+        <button id="generateImageButton">Generuj obraz z pliku .txt</button>
+    </div>
 
     <!-- Canvas do wyświetlania obrazu -->
     <canvas id="canvas"></canvas>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2024 Konwerter Obrazu | Stworzone z <a href="https://blith.com">Blith Project</a>
+    </footer>
 
     <script>
         const imageInput = document.getElementById('imageInput');
@@ -109,7 +162,6 @@
                     const pixels = imageData.data;
                     let hexColors = '';
 
-                    // Przechodzenie po każdym wierszu pikseli
                     for (let y = 0; y < img.height; y++) {
                         let rowColors = '';
                         for (let x = 0; x < img.width; x++) {
@@ -119,14 +171,14 @@
                             const b = pixels[i+2].toString(16).padStart(2, '0');
                             rowColors += `#${r}${g}${b} `;
                         }
-                        hexColors += rowColors.trim() + '\n'; // Dodajemy nową linię po każdym wierszu
+                        hexColors += rowColors.trim() + '\n';
                     }
 
                     const blob = new Blob([hexColors], { type: 'text/plain' });
                     const url = URL.createObjectURL(blob);
                     downloadLink.href = url;
                     downloadLink.download = 'blithproject1.txt';
-                    downloadLink.style.display = 'block';
+                    downloadLink.classList.add('visible');
                     downloadLink.textContent = 'Pobierz plik blithproject1.txt';
                 };
                 img.src = event.target.result;
@@ -149,7 +201,6 @@
                 canvas.height = height;
                 const imageData = ctx.createImageData(width, height);
                 
-                // Odczytujemy kolory pikseli z pliku tekstowego
                 for (let y = 0; y < height; y++) {
                     const row = hexColors[y].split(' ');
                     for (let x = 0; x < width; x++) {
@@ -161,7 +212,7 @@
                         imageData.data[idx] = r;
                         imageData.data[idx + 1] = g;
                         imageData.data[idx + 2] = b;
-                        imageData.data[idx + 3] = 255; // Alfa (pełna nieprzezroczystość)
+                        imageData.data[idx + 3] = 255;
                     }
                 }
 
